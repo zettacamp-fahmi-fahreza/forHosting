@@ -29,7 +29,7 @@ const app = express();
 
 connectDB().catch((err) => console.log(err));
 async function connectDB() {
-    await mongoose.connect("mongodb://localhost:27017/warmindo");
+    await mongoose.connect("mongodb+srv://cisi:cisi123@cluster0.r5ynikk.mongodb.net/warmindo?retryWrites=true&w=majority");
 }connectDB()
 const typeDefs = [
     userTypeDefs,
