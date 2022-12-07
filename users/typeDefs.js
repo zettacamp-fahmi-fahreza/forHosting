@@ -11,10 +11,13 @@ type User {
     status: Enum
     userType: userType
     role: Role
+    balance: Int
     # cart: [Menu]
     sort: userSort
     fullName: String
     isUsed: Boolean
+    security_question: String
+    security_answer: String
     }
     type userSort {
         email: enumSorting
@@ -75,32 +78,53 @@ type login {
     user: userLogin
     }
 type Mutation {
-    addUser(
+    changePassword(
+        email: String,
+        fromLogin: Boolean
+        old_password: String
+        new_password: String
+    ): User
+    forgotPassword(
+        email: String
+        security_question: String
+        security_answer: String
+    ) : User
+    register(
     img: String
     password: String!
     email: String!
     last_name: String!
     first_name: String!
-    role: Role!
+    # check_password: String!
+    security_question: String!
+    security_answer: String!
+    # role: Role!
     ) : User!
     updateUser(
-        id: ID
+        # id: ID
         # password: String
     email: String
     last_name: String
     first_name: String
-    status: Enum
+    fullName: String
+    img: String
+    # status: Enum
+    # isUsed: Boolean
+    ): User
+
+    logout(
+    # id: ID
+    email: String
     isUsed: Boolean
-    
     ): User
     deleteUser(id: ID!): respondDelUser!
     getToken(email: String!, password:String!) : login!
-    logout(isUsed: Boolean): User
+    # logout(isUsed: Boolean): User
     # addCart( input: [menuInput]) : respondAddCart!
 }
 type Query {
     getAllUsers(email:String,last_name: String,first_name:String,page: Int,limit: Int sort:userSorting ) : usersPage!
-    getOneUser(email:String,id:ID): User!
+    getOneUser(email:String,id:ID): User
 }`
 
     module.exports = {userTypeDefs}

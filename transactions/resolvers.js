@@ -6,7 +6,8 @@ const bcrypt = require('bcrypt');
 const { GraphQLScalarType ,Kind} = require ('graphql');
 const moment = require('moment');
 const { ifError } = require('assert');
-async function getAllTransactions(parent,{page, limit, last_name_user,time_start,time_end ,recipe_name,order_status, order_date,order_date_start,order_date_end, fullName_user,isCart,sort,userFind},context,info) {
+const { argsToArgsConfig } = require('graphql/type/definition');
+async function getAllTransactions(parent,{page, limit, last_name_user,time_start,time_end ,recipe_name,order_status,filterDate, order_date,order_date_start,order_date_end, fullName_user,isCart,sort,userFind},context,info) {
     let count = null
     let isUser = await users.findById(context.req.payload)
     let aggregateQuery = []
@@ -29,7 +30,7 @@ async function getAllTransactions(parent,{page, limit, last_name_user,time_start
                 order_status:"success",
                 status: 'active',
             }},
-            {$sort: {_id:-1}}
+            {$sort: {updatedAt:-1}}
         )
         count = await transactions.count({status: 'active',order_status:"success" });
     }
@@ -83,131 +84,6 @@ async function getAllTransactions(parent,{page, limit, last_name_user,time_start
         count = await transactions.count({status: 'active',order_status:"success",user_id: mongoose.Types.ObjectId(context.req.payload)
     });
 
-    if(order_date_start && order_date_end){
-        if(time_start && time_end){
-            if(order_date_start === order_date_end){
-                aggregateQuery.push(
-                    {
-                        $match: {"updatedAt" :{
-                            $gte:new Date(`${order_date_start}T${time_start}`),
-                    },user_id: mongoose.Types.ObjectId(context.req.payload)
-                }
-
-                    
-                    }
-                    )
-                    count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload)
-                    ,"updatedAt" : {
-                        $gte:new Date(`${order_date_start}T${time_start}`)
-                    }})
-            }else{
-                aggregateQuery.push(
-                    {
-                        $match: {"updatedAt" :{
-                            $gte:new Date(`${order_date_start}T${time_start}`),
-                            $lte: new Date(`${order_date_end}T${time_end}`)
-                        
-                    },user_id: mongoose.Types.ObjectId(context.req.payload)
-                }
-                    }
-                    )
-                    count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload) ,"updatedAt" : {
-                        $gte:new Date(`${order_date_start}T${time_start}`),
-                        $lte: new Date(`${order_date_end}T${time_end}`)
-                    }})
-            }
-        }
-            if(order_date_start === order_date_end){
-                aggregateQuery.push(
-                    {
-                        $match: {"updatedAt" :{
-                            $gte:new Date(order_date_start)
-                        
-                    },user_id: mongoose.Types.ObjectId(context.req.payload)
-                }
-                    
-                    }
-                    )
-                    count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload) ,"updatedAt" : {
-                        $gte:new Date(order_date_start)
-                    }})
-            }else{
-                aggregateQuery.push(
-                    {
-                        $match: {"updatedAt" :{
-                            $gte:new Date(order_date_start),
-                            $lte: new Date(order_date_end)
-                        
-                    },user_id: mongoose.Types.ObjectId(context.req.payload)}
-                    }
-                    )
-                    count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload) ,"updatedAt" : {
-                        $gte:new Date(order_date_start), $lte: new Date(order_date_end)
-                    }})
-            }
-        // if(order_date_start === order_date_end){
-        //     aggregateQuery.push(
-        //         {
-        //             $match: {"updatedAt" :{$eq: new Date(order_date_start)
-        //         }}
-        //         })
-        // }else{
-
-        // }
-    }
-    
-    if(order_date_start && !order_date_end){
-        if(time_start && !time_end){
-        aggregateQuery.push(
-            {
-                $match: {"updatedAt" :{
-                    $gte:new Date(`${order_date_start}T${time_start}`)
-                
-            },user_id: mongoose.Types.ObjectId(context.req.payload)}
-            }
-            )
-            count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload) ,"updatedAt" : {
-                $gte:new Date(`${order_date_start}T${time_start}`)
-            }})
-        }
-        aggregateQuery.push(
-            {
-                $match: {"updatedAt" :{
-                    $gte:new Date(order_date_start)
-                
-            },user_id: mongoose.Types.ObjectId(context.req.payload)}
-            }
-            )
-            count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload) ,"updatedAt" : {
-                $gte:new Date(order_date_start)
-            }})
-    }
-    if(order_date_end && !order_date_start){
-        if(time_end && !time_start){
-        aggregateQuery.push(
-            {
-                $match: {"updatedAt" :{
-                    $lte:new Date(`${order_date_end}T${time_end}`)
-                
-            },user_id: mongoose.Types.ObjectId(context.req.payload)}
-            }
-            )
-            count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload) ,"updatedAt" : {
-                $lte:new Date(`${order_date_end}T${time_end}`)
-            }})
-        }
-        aggregateQuery.push(
-            {
-                $match: {"updatedAt" :{
-                    $lte:new Date(order_date_end)
-                
-            },user_id: mongoose.Types.ObjectId(context.req.payload)}
-            }
-            )
-            count = await transactions.count({status: 'active',user_id: mongoose.Types.ObjectId(context.req.payload) ,"updatedAt" : {
-                $lte:new Date(order_date_end)
-            }})
-    }
         if(userFind || last_name_user){
             throw new ApolloError('FooError', {
                 message: 'Not Authorized!'
@@ -379,7 +255,57 @@ async function getAllTransactions(parent,{page, limit, last_name_user,time_start
             }})
     }
     }
+    if(filterDate){
+        if(filterDate.option === 'last7Days'){
+            const last7Days = moment().subtract(7, 'days')
+            console.log(last7Days)
 
+            aggregateQuery.push(
+                {
+                    $addFields: {
+                        date: {
+                           $dateFromString: {
+                              dateString: '$order_date',
+                              // timezone: 'America/New_York'
+                           }
+                        }
+                    }
+                },
+                {
+                    $match: {date :{
+                        $gte:new Date(last7Days)
+                }}
+                }
+                )
+                // count = await transactions.count({status: 'active' ,"order_date" : {
+                //     $gte:last7Days
+                // }})
+        }
+        if(filterDate.option === 'yesterday'){
+            const yesterday = moment().subtract(1, 'days');
+            console.log(new Date(yesterday))
+            aggregateQuery.push(
+                {
+                    $addFields: {
+                        date: {
+                           $dateFromString: {
+                              dateString: '$order_date',
+                              // timezone: 'America/New_York'
+                           }
+                        }
+                    }
+                },
+                {
+                    $match: {date :{
+                        $gte:new Date(yesterday)
+                }}
+                }
+                )
+                count = await transactions.count({status: 'active' ,"order_date" : {
+                    $gte:yesterday
+                }})
+        }
+    }
    
     
     if (page){
@@ -389,6 +315,7 @@ async function getAllTransactions(parent,{page, limit, last_name_user,time_start
         {$limit: limit})
     }
      let result = await transactions.aggregate(aggregateQuery);
+                count = result.length
                 result.forEach((el)=>{
                             el.id = mongoose.Types.ObjectId(el._id)
                         })
@@ -401,6 +328,7 @@ async function getAllTransactions(parent,{page, limit, last_name_user,time_start
                                 message: 'Page is Empty!'
                             });
                         }
+                        console.log(result)
                 return {
                 count: count,
                 max_page: max_page,
@@ -457,18 +385,16 @@ try{
             message: "Cart is Empty"
         })
     }
+    const userCheck = await users.findById(user_id) 
     let available = 0
     let price = 0
     let totalPrice = 0
-    // let stock = 0
     let recipeStatus = null
-    let discount = 10
+    let message = []
     const stockIngredient = {};
     const ingredientMap = []
     for ( let menu of menuTransaction.menu){
-        // console.log(menu)
         if(menu.recipe_id.status === 'unpublished'){
-            // recipeName = []
             
             throw new ApolloError("FooError",{
                 message: "Menu Cannot be ordered as it is Unpublished!"
@@ -477,27 +403,39 @@ try{
         recipeStatus = menu.recipe_id.status
         available = menu.recipe_id.available
         price = menu.recipe_id.price - (menu.recipe_id.price * menu.recipe_id.discountAmount/100)
-        // if(menu.recipe_id.isDiscount === true){
-        // }else{
-        //     price = menu.recipe_id.finalPrice
-        // }
+
+        let sold = menu.recipe_id.sold
+
         const amount = menu.amount
-        // console.log(menu.recipe_id.recipe_name)
-        // totalPrice = price * amount
         for( let ingredient of menu.recipe_id.ingredients){
-            // stock = ingredient.ingredient_id.stock
                 const ingredientRecipe = {ingredient_id: ingredient.ingredient_id._id,
                     stock: ingredient.ingredient_id.stock - (ingredient.stock_used * amount)}
                     if (ingredientRecipe.ingredient_id in stockIngredient) { }
                     else { stockIngredient[ingredientRecipe.ingredient_id] = ingredient.ingredient_id.stock; }
                     
                 if(checkout === true){
-
-                    if(stockIngredient[ingredientRecipe.ingredient_id] < (ingredient.stock_used * amount)){
-                        throw new ApolloError('FooError',{
-                            message: `${menu.recipe_id.recipe_name} has sufficient stock ingredient}`
+                    if (userCheck.balance < price * amount){
+                        throw new ApolloError("FooError",{
+                            message: "It appears your balance is not enough for this transaction, Please Top Up!"
                         })
                     }
+                    if(stockIngredient[ingredientRecipe.ingredient_id] < (ingredient.stock_used * amount)){
+                       
+                        message.push(menu.recipe_id.recipe_name)
+                    }
+                    if(message.length === 0){
+                        await users.findByIdAndUpdate(user_id,{
+                            $set:{
+                                balance: userCheck.balance - (price * amount)
+                            }
+                        })
+                        await recipes.findByIdAndUpdate(menu.recipe_id._id,{
+                            $set: {
+                                sold: sold + menu.amount
+                            },
+                        },{new: true})
+                    }
+                    // console.log(menu.recipe_id.sold)
                 }else{
                     if(ingredient.ingredient_id.stock < ingredient.stock_used * amount){
                         throw new ApolloError('FooError',{
@@ -505,16 +443,20 @@ try{
                         })
                     }
                 }
-                
             stockIngredient[ingredientRecipe.ingredient_id] -= (ingredient.stock_used * amount);
                 ingredientMap.push({
                     ingredient_id: ingredient.ingredient_id._id,
                     stock: stockIngredient[ingredientRecipe.ingredient_id],
                 })
         }
-        console.log(price)
         totalPrice += price * amount;
     }
+    if(message.length > 0 ){
+         throw new ApolloError('FooError',{
+                            message: `${message} has sufficient stock ingredient`
+                        })
+    }
+    // return true
     // ingredientMap.forEach((el) => {
     //     // console.log(`ini el.stock: ${el.stock}`)
     //     if(el.stock < 0){
@@ -571,7 +513,7 @@ async function checkoutTransaction(parent,args,context){
         })
     }
     newTransaction = await validateStockIngredient(context.req.payload, menu,true)
-    reduceIngredientStock(newTransaction.ingredientMap)
+    // reduceIngredientStock(newTransaction.ingredientMap)
     transaction.forEach(async(el) => {
         el.order_status= 'success'
     })
@@ -579,15 +521,18 @@ async function checkoutTransaction(parent,args,context){
     return transaction
 }
 async function updateTransaction(parent,args,context){
-    let transaction = await transactions.findById(args.id)
     let amount = 0
     let recipeId = ""
     let note = ""
-    transaction.menu.forEach((el) => {
-        amount = el.amount
-        recipeId = el.recipe_id
-        note = el.note
-    })
+    let transaction = null
+    if(args.id){
+        transaction = await transactions.findById(args.id)
+        transaction.menu.forEach((el) => {
+            amount = el.amount
+            recipeId = el.recipe_id
+            note = el.note
+        })
+    }
 
     if(args.note === ""){
         transaction.menu.forEach((el) => {
@@ -630,12 +575,15 @@ const data = await transactions.findById(args.id)
 if(updateTransaction)return data
     }
     if(args.option === 'emptyCart'){
-        const findTransaction = await transactions.updateMany({
+        const deleteTransaction = await transactions.updateMany({
             user_id: mongoose.Types.ObjectId(context.req.payload),
             order_status: "pending"
         },{
-            
-        })
+            $set:{
+                status: 'deleted'
+            }
+        },{new : true})
+        return deleteTransaction
     }
     if(args.option === 'delete'){
         const updateTransaction = await transactions.findByIdAndUpdate(args.id,{

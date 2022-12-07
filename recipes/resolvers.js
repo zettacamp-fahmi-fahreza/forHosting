@@ -1,10 +1,6 @@
-
 const mongoose = require('mongoose');
 const {recipes,ingredients,transactions} = require('../schema');
 const { ApolloError} = require('apollo-errors');
-const { ifError } = require('assert');
-
-
 
 async function getActiveMenu(parent,args,context,info) {
     let count = await recipes.count({status:'active'});
@@ -39,6 +35,9 @@ async function getActiveMenu(parent,args,context,info) {
         }
         if(args.sorting.price){
             args.sorting.price === 'asc' ? aggregateQuery.push({$sort: {price:1}}) : aggregateQuery.push({$sort: {price:-1}})
+        }
+        if(args.sorting.sold){
+            args.sorting.sold === 'asc' ? aggregateQuery.push({$sort: {sold:1}}) : aggregateQuery.push({$sort: {sold:-1}})
         }
     }
     if(aggregateQuery.length === 0){
@@ -75,16 +74,11 @@ async function getActiveMenu(parent,args,context,info) {
 
 async function getAllRecipes(parent,args,context,info) {
     let count = await recipes.count({status:{$ne:'deleted'} });
-    // console.log(count)
-    
-
     let aggregateQuery = [
         {$match: {
             status:  {$ne: 'deleted'},
         }},            
         {$sort: {_id:-1}}
-
-
     ]
     if(args.highlight) {
         aggregateQuery.push({
@@ -98,7 +92,6 @@ async function getAllRecipes(parent,args,context,info) {
             $match: {recipe_name: new RegExp(args.recipe_name, "i")}
         })
         count = await recipes.count({recipe_name: new RegExp(args.recipe_name, "i")});
-
     }
     if (args.page){
         aggregateQuery.push({
@@ -106,12 +99,15 @@ async function getAllRecipes(parent,args,context,info) {
         },
         {$limit: args.limit})
     }
-    if(args.input){
-        if(args.input.recipe_name){
-            args.input.recipe_name === 'asc' ? aggregateQuery.push({$sort: {recipe_name:1}}) : aggregateQuery.push({$sort: {recipe_name:-1}})
+    if(args.sorting){
+        if(args.sorting.recipe_name){
+            args.sorting.recipe_name === 'asc' ? aggregateQuery.push({$sort: {recipe_name:1}}) : aggregateQuery.push({$sort: {recipe_name:-1}})
         }
-        if(args.input.price){
-            args.input.price === 'asc' ? aggregateQuery.push({$sort: {price:1}}) : aggregateQuery.push({$sort: {price:-1}})
+        if(args.sorting.price){
+            args.sorting.price === 'asc' ? aggregateQuery.push({$sort: {price:1}}) : aggregateQuery.push({$sort: {price:-1}})
+        }
+        if(args.sorting.sold){
+            args.sorting.sold === 'asc' ? aggregateQuery.push({$sort: {sold:1}}) : aggregateQuery.push({$sort: {sold:-1}})
         }
     }
     let result = await recipes.aggregate(aggregateQuery);

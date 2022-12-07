@@ -17,7 +17,7 @@ async function testMiddleware(resolve,parent,args,context,info) {
 
 module.exports = {
     Query: {
-        getOneUser: testMiddleware,
+        // getOneUser: testMiddleware,
         getAllUsers: testMiddleware,
         getOneIngredient: testMiddleware,
         getAllIngredient: testMiddleware,
@@ -26,7 +26,7 @@ module.exports = {
         getOneTransaction: testMiddleware,
     },
     Mutation: {
-        addUser: testMiddleware,
+        // addUser: testMiddleware,
         // updateUser: testMiddleware,
         deleteUser: testMiddleware,
         addIngredient: testMiddleware,

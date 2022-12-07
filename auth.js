@@ -33,7 +33,8 @@ module.exports = {
     },
     Mutation: {
         checkoutTransaction: authMiddleware,
-        addUser: authMiddleware,
+        // addUser: authMiddleware,
+        // logout: authMiddleware,
         updateUser: authMiddleware,
         deleteUser: authMiddleware,
         addIngredient: authMiddleware,

@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim:true
     },
+    balance : {
+        type: Number,
+        default: 500000,
+    },
     img: {
         type: String,
         default: "https://cdn-icons-png.flaticon.com/512/168/168719.png",
@@ -61,10 +65,19 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ['user','admin'],
+        default: 'user'
     },
     isUsed: {
         type: Boolean,
         default: false
+    },
+    security_question: {
+        type: String,
+        required: true
+    },
+    security_answer: {
+        type: String,
+        required: true
     }
 })
 const ingredientsSchema = new mongoose.Schema({
@@ -132,6 +145,10 @@ const recipesSchema = new mongoose.Schema({
         type: String,
         // trim: true,
         required: true
+    },
+    sold: {
+        type: Number,
+        default: 0
     },
     available: {
         type: Number
